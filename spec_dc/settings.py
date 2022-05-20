@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'dim.apps.DimConfig',
     'dwd.apps.DwdConfig',
     'dws.apps.DwsConfig',
+    'tdm.apps.TdmConfig',
 ]
 
 MIDDLEWARE = [

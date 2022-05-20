@@ -1,6 +1,5 @@
 import datetime
 
-from dateutil.relativedelta import relativedelta
 from django.db.models import Q, Count
 from django.http import HttpResponse
 from django.views import View
@@ -20,9 +19,17 @@ class BuildDwsBenchmarkView(View):
     def _solve(self):
         suites = DimSuite.objects.all()
         for suite in suites.iterator():
+            print(f"--- Start {suite.suite}")
             self._get_top_1y(suite)
             self._get_top_1q(suite)
             self._get_top_y(suite)
+            self._get_top(suite)
+
+    def _get_top(self, suite):
+        base_query_set = DwdTestInfo.objects.filter(
+            suite_id=suite.id
+        )
+        self._insert_by_cpu_type(suite, base_query_set, 'all', top=-1)
 
     def _get_top_1y(self, suite):
         start, now = get_recent_n_year()
@@ -49,9 +56,9 @@ class BuildDwsBenchmarkView(View):
 
             self._insert_by_cpu_type(suite, base_query_set, 'y')
 
-    def _insert_by_cpu_type(self, suite, base_query_set, time_level):
+    def _insert_by_cpu_type(self, suite, base_query_set, time_level, top=3):
         query_set = base_query_set.order_by('-result')
-        self._insert(suite, query_set, cpu_type='All', time_level=time_level)
+        self._insert(suite, query_set, 'All', time_level, top)
 
         cpu_types = ['Intel', 'AMD', 'Huawei']
         for cpu_type in cpu_types:
@@ -63,9 +70,12 @@ class BuildDwsBenchmarkView(View):
         return query_set.filter(cpu__cpu_vendor=cpu_type)
 
     @classmethod
-    def _insert(cls, suite, query_set, cpu_type, time_level):
+    def _insert(cls, suite, query_set, cpu_type, time_level, top=3):
         idx = 1
-        for item in query_set[:3]:
+        if top != -1:
+            query_set = query_set[:top]
+        total_len = len(query_set)
+        for item in query_set:
             test_date_value = DimDate.objects.get(id=item.test_date_id).full_date
             DwsBenchmark.objects.get_or_create(
                 suite_id=item.suite_id, suite_name=item.suite_name,
@@ -75,6 +85,7 @@ class BuildDwsBenchmarkView(View):
                 test_date_id=item.test_date_id, test_date_value=test_date_value, time_level=time_level,
                 result=item.result
             )
+            print(f"[{suite.suite}] [{time_level}]: {idx} / {total_len}")
             idx += 1
 
 
