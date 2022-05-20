@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'ods.apps.OdsConfig',
     'dim.apps.DimConfig',
     'dwd.apps.DwdConfig',
-    # 'dws.apps.DwsConfig',
+    'dws.apps.DwsConfig',
 ]
 
 MIDDLEWARE = [
