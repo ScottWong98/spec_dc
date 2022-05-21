@@ -1,8 +1,12 @@
 import datetime
+import os
+
+import django
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'spec_dc.settings'
+django.setup()
 
 from django.db.models import Q, Count
-from django.http import HttpResponse
-from django.views import View
 
 from dim.models import DimSuite, DimDate, DimVendor
 from dwd.models import DwdTestInfo, DwdSubmitInfo
@@ -10,11 +14,10 @@ from dws.models import DwsBenchmark, DwsVendor
 from spec_dc.utils import get_year_and_quarter, get_recent_n_year
 
 
-class BuildDwsBenchmarkView(View):
+class BuildDwsBenchmark:
 
-    def get(self, request):
+    def run(self):
         self._solve()
-        return HttpResponse('Build dws_benchmark View\n')
 
     def _solve(self):
         suites = DimSuite.objects.all()
@@ -72,30 +75,33 @@ class BuildDwsBenchmarkView(View):
     @classmethod
     def _insert(cls, suite, query_set, cpu_type, time_level, top=3):
         idx = 1
+        total_test = len(query_set)
         if top != -1:
             query_set = query_set[:top]
         total_len = len(query_set)
         for item in query_set:
             test_date_value = DimDate.objects.get(id=item.test_date_id).full_date
             DwsBenchmark.objects.get_or_create(
+                test_info_id=item.id,
                 suite_id=item.suite_id, suite_name=item.suite_name,
-                system_id=item.system_id, system_name=item.system_name,
                 vendor_id=item.vendor_id, vendor_name=item.vendor_name,
-                cpu_type=cpu_type, rank_level=idx, hw_avail_id=item.hw_avail_id,
+                system_id=item.system_id, system_name=item.system_name,
+                cpu_type=cpu_type, rank_level=idx, total_test=total_test,
+                hw_avail_id=item.hw_avail_id,
                 test_date_id=item.test_date_id, test_date_value=test_date_value, time_level=time_level,
-                result=item.result
+                result=item.result, url_suffix=item.url_suffix, full_url=item.full_url,
             )
             print(f"[{suite.suite}] [{time_level}]: {idx} / {total_len}")
             idx += 1
 
 
-class BuildDwsVendorView(View):
+class BuildDwsVendor:
 
-    def get(self, request):
+    def run(self):
         self._solve()
-        return HttpResponse('Build dws_vendor View\n')
 
     def _solve(self):
+        print(f"--- Start build dws_vendor ---")
         vendors = DimVendor.objects.all()
         for vendor in vendors.iterator():
             submit_sum_1y = self._get_submit_sum_1y(vendor)
@@ -104,7 +110,7 @@ class BuildDwsVendorView(View):
             first_submit_date = self._get_first_submit_date(vendor)
             last_submit_date = self._get_last_submit_date(vendor)
             system_sum = self._get_system_sum(vendor, 'system_name')
-            system_series_sum = self._get_system_sum(vendor, 'system_series')
+            system_series_sum = self._get_system_sum(vendor, 'system_series_id')
             nt_1y = self._get_nt(vendor, '1y')
             nt_1q = self._get_nt(vendor, '1q')
             DwsVendor.objects.get_or_create(
@@ -170,3 +176,15 @@ class BuildDwsVendorView(View):
             return DwdTestInfo.objects.filter(
                 Q(vendor_id=vendor.id) & Q(test_date__quarter=cur_quarter) & Q(test_date__year=cur_year)
             ).aggregate(cnt=Count('id')).get('cnt', 0)
+
+
+def main():
+    build_dws_bm = BuildDwsBenchmark()
+    build_dws_vendor = BuildDwsVendor()
+
+    build_dws_bm.run()
+    build_dws_vendor.run()
+
+
+if __name__ == '__main__':
+    main()

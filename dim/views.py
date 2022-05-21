@@ -1,19 +1,20 @@
 import datetime
+import os
 
-from django.core.handlers.wsgi import WSGIRequest
-from django.http import HttpResponse
-from django.views import View
+import django
 
-from dim.models import DimSuite, DimDate, DimCpu, DimVendor, DimSystem
+os.environ['DJANGO_SETTINGS_MODULE'] = 'spec_dc.settings'
+django.setup()
+
+from dim.models import DimSuite, DimDate, DimCpu, DimVendor, DimSystem, DimSystemSeries
 from dwd.models import DwdTestInfo, DwdSubmitInfo
 from ods.models import OdsSpecModel
 
 
-class BuildDimView(View):
+class BuildDimDwd:
 
-    def get(self, request: WSGIRequest):
+    def run(self):
         self._solve()
-        return HttpResponse('Build Dim View\n')
 
     def _solve(self):
         query_set = OdsSpecModel.objects.all()
@@ -34,10 +35,12 @@ class BuildDimView(View):
             spec_model.max_ghz, spec_model.cores_per_chip, spec_model.threads_per_core,
         )
         vendor = self._process_vendor(spec_model.hw_vendor)
+        system_series = self._process_system_series(spec_model.system_series)
         system_name = f"{spec_model.system_series} ({spec_model.cpu_name})"
+
         system = self._process_system(
-            vendor.id, spec_model.hw_vendor, spec_model.system_series, system_name,
-            cpu.id, spec_model.chips, spec_model.nodes, spec_model.total_cores,
+            vendor.id, spec_model.hw_vendor, system_series, system_name,
+            cpu, spec_model.chips, spec_model.nodes, spec_model.total_cores,
             spec_model.l1_cache, spec_model.l2_cache, spec_model.l3_cache,
             spec_model.memory, spec_model.memory_number, spec_model.memory_amount,
             spec_model.storage_type, spec_model.storage, spec_model.os,
@@ -46,31 +49,35 @@ class BuildDimView(View):
 
         DwdTestInfo.objects.get_or_create(
             vendor_id=vendor.id, vendor_name=vendor.vendor, system_id=system.id,
-            system_series=system.system_series, system_name=system_name,
-            cpu_id=cpu.id, chips=system.chips, nodes=system.chips,
+            system_name=system_name, system_series_id=system_series.id, system_series_name=system_series.system_series,
+            cpu_id=cpu.id, cpu_name=cpu.cpu_name, chips=system.chips, nodes=system.chips,
             total_cores=system.total_cores, l1_cache=system.l1_cache,
             l2_cache=system.l2_cache, l3_cache=system.l3_cache, memory=system.memory,
             memory_amount=system.memory_amount, memory_number=system.memory_number,
             storage_type=system.storage_type, storage=system.storage, os=system.os,
             file_system=system.file_system, jvm=system.jvm, hw_avail_id=hw_avail.id,
             result=spec_model.result, suite_id=suite.id, suite_name=suite.suite,
-            test_date_id=test_date.id
+            test_date_id=test_date.id, url_suffix=spec_model.url_suffix, full_url=spec_model.full_url,
         )
         DwdSubmitInfo.objects.get_or_create(
             vendor_id=vendor.id, vendor_name=vendor.vendor, system_id=system.id,
-            system_series=system.system_series, system_name=system.system_name,
+            system_name=system.system_name, system_series_id=system_series.id,
+            system_series_name=system_series.system_series,
             suite_id=suite.id, suite_name=suite.suite, submit_year=spec_model.submit_year,
-            submit_quarter=spec_model.submit_quarter
+            submit_quarter=spec_model.submit_quarter, url_suffix=spec_model.url_suffix,
+            full_url=spec_model.full_url,
         )
 
     @classmethod
-    def _process_system(cls, vendor_id, hw_vendor, system_series, system_name, cpu_id, chips,
+    def _process_system(cls, vendor_id, hw_vendor, system_series, system_name, cpu, chips,
                         nodes, total_cores, l1_cache, l2_cache, l3_cache, memory,
                         memory_number, memory_amount, storage_type, storage, os,
                         file_system, jvm, hw_avail_id):
         obj, created = DimSystem.objects.get_or_create(
-            vendor_id=vendor_id, vendor_name=hw_vendor, system_series=system_series,
-            system_name=system_name, cpu_id=cpu_id, chips=chips, nodes=nodes, total_cores=total_cores,
+            vendor_id=vendor_id, vendor_name=hw_vendor, system_series_id=system_series.id,
+            system_series_name=system_series.system_series,
+            system_name=system_name, cpu_id=cpu.id, cpu_name=cpu.cpu_name, chips=chips, nodes=nodes,
+            total_cores=total_cores,
             l1_cache=l1_cache, l2_cache=l2_cache, l3_cache=l3_cache, memory=memory,
             memory_number=memory_number, memory_amount=memory_amount, storage_type=storage_type,
             storage=storage, os=os, file_system=file_system, jvm=jvm, hw_avail_id=hw_avail_id,
@@ -127,3 +134,17 @@ class BuildDimView(View):
         day = int(date_str.strftime('%d'))
         quarter = (month - 1) // 3 + 1
         return year, quarter, month, day
+
+    @classmethod
+    def _process_system_series(cls, system_series):
+        obj, created = DimSystemSeries.objects.get_or_create(system_series=system_series)
+        return obj
+
+
+def main():
+    build_dim_dwd = BuildDimDwd()
+    build_dim_dwd.run()
+
+
+if __name__ == '__main__':
+    main()

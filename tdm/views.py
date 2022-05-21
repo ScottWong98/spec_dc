@@ -1,6 +1,11 @@
+import os
+
+import django
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'spec_dc.settings'
+django.setup()
+
 from django.db.models import Sum, Count, F
-from django.http import HttpResponse
-from django.views import View
 
 from dim.models import DimVendor, DimSystem, DimCpu
 from dwd.models import DwdTestInfo
@@ -8,12 +13,12 @@ from dws.models import DwsVendor
 from tdm.models import TdmVendor, TdmSystem, TdmCpu
 
 
-class BuildTdmVendorView(View):
-    def get(self, request):
+class BuildTdmVendor:
+    def run(self):
         self._solve()
-        return HttpResponse('Build TDM Vendor View\n')
 
     def _solve(self):
+        print(f"--- Start build tdm_vendor ---")
         vendors = DimVendor.objects.all()
         for vendor in vendors.iterator():
             vendor_name = vendor.vendor
@@ -64,32 +69,35 @@ class BuildTdmVendorView(View):
         return prefer_cpu_type, cpu_sum_intel, cpu_sum_amd, cpu_sum_huawei, cpu_sum_other
 
 
-class BuildTdmSystemView(View):
-    def get(self, request):
+class BuildTdmSystem:
+    def run(self):
         self._solve()
-        return HttpResponse('Build TDM System View')
 
     def _solve(self):
+        print(f"--- Start build tdm_system ---")
         systems = DimSystem.objects.all()
         idx = 1
         total_len = len(systems)
         for system in systems.iterator():
             total_cores, total_threads = self._get_total_cores_and_threads(system)
-            best_rank, best_rank_suite_id, best_rank_suite_name = self._get_best_rank(system)
+            best_rank, best_rank_suite_id, best_rank_suite_name, best_rank_total_num, best_rank_test_id = \
+                self._get_best_rank(system)
             TdmSystem.objects.get_or_create(
-                system_id=system.id, system_name=system.system_name, system_series=system.system_series,
+                system_id=system.id, system_name=system.system_name, system_series_id=system.system_series_id,
                 vendor_id=system.vendor_id, vendor_name=system.vendor_name, total_cores=total_cores,
                 total_threads=total_threads,
                 best_rank=best_rank, best_rank_suite_id=best_rank_suite_id, best_rank_suite_name=best_rank_suite_name,
+                best_rank_total_num=best_rank_total_num, best_rank_test_id=best_rank_test_id
             )
             print(f"Status: {idx} / {total_len}")
             idx += 1
 
     @classmethod
     def _get_best_rank(cls, system):
-        d = DimSystem.objects.get(id=system.id).dws_benchmark.values('rank_level', 'suite_name',
-                                                                     'suite__id').order_by('rank_level')[0]
-        return d['rank_level'], d['suite__id'], d['suite_name']
+        d = DimSystem.objects.get(id=system.id).dws_benchmark.values(
+            'test_info_id', 'rank_level', 'suite_name', 'suite_id', 'total_test'
+        ).order_by('rank_level')[0]
+        return d['rank_level'], d['suite_id'], d['suite_name'], d['total_test'], d['test_info_id']
 
     @classmethod
     def _get_total_cores_and_threads(cls, system):
@@ -98,12 +106,12 @@ class BuildTdmSystemView(View):
         return total_cores, total_cores * d['threads_per_core']
 
 
-class BuildTdmCpuView(View):
-    def get(self, request):
+class BuildTdmCpu:
+    def run(self):
         self._solve()
-        return HttpResponse('Build TDM CPU View\n')
 
     def _solve(self):
+        print(f"--- Start build tdm_cpu ---")
         cpus = DimCpu.objects.all()
         for cpu in cpus.iterator():
             is_turbo = self._get_is_turbo(cpu)
@@ -124,3 +132,17 @@ class BuildTdmCpuView(View):
     def _get_logical_cpus(cls, cpu):
         cores, threads_per_cores = DimCpu.objects.filter(id=cpu.id).values_list('cores', 'threads_per_core')[0]
         return cores * threads_per_cores
+
+
+def main():
+    build_tdm_vendor = BuildTdmVendor()
+    build_tdm_system = BuildTdmSystem()
+    build_tdm_cpu = BuildTdmCpu()
+
+    # build_tdm_vendor.run()
+    # build_tdm_system.run()
+    build_tdm_cpu.run()
+
+
+if __name__ == '__main__':
+    main()

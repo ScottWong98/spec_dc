@@ -1,28 +1,24 @@
-import json
 import os
-from typing import Dict
 
 import pandas as pd
-from django.core.handlers.wsgi import WSGIRequest
-from django.http import HttpResponse
-from django.views import View
+
+import django
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'spec_dc.settings'
+django.setup()
 
 from ods.models import OdsSpecModel
 
 
-class LoadView(View):
+class BuildOds:
 
-    def post(self, request: WSGIRequest):
-        data: Dict = json.loads(request.body)
-        filename = data.get('filename', None)
-        bm_type = data.get('bm_type', None)
+    def run(self, filename, bm_type):
         if filename is not None and os.path.isfile(filename) and filename.split('.')[-1] == 'csv':
             is_ok = self._load(bm_type, filename)
-            if is_ok:
-                return HttpResponse(f"Load {bm_type} - {filename} Successfully")
-            else:
-                return HttpResponse(f"Error! Check {bm_type} or {filename}")
-        return HttpResponse(f"Error! Check {bm_type} or {filename}")
+            if not is_ok:
+                print(f"Error, Enter correct filename and bm_type")
+        else:
+            print(f"Error, Enter correct filename and bm_type")
 
     def _load(self, bm_type, filename):
         df = pd.read_csv(filename)
@@ -100,3 +96,22 @@ class LoadView(View):
         spec_model.storage = row['Storage']
         spec_model.jvm = row['JVM']
         spec_model.save()
+
+
+def main():
+    data_folder = '/home/scott/Documents/SPEC_Spider/clean'
+    filenames = [
+        ('cpu/cpu2006.csv', 'cpu2006'),
+        ('cpu/cpu2017.csv', 'cpu2017'),
+        ('java/jbb2015.csv', 'jbb2015'),
+        ('java/jvm2008.csv', 'jvm2008'),
+        ('power/ssj2008.csv', 'ssj2008'),
+    ]
+    build_ods = BuildOds()
+    for fpath, bm_type in filenames:
+        print(f"--- Start build {bm_type}")
+        build_ods.run(os.path.join(data_folder, fpath), bm_type)
+
+
+if __name__ == '__main__':
+    main()
