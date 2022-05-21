@@ -17,6 +17,9 @@ class TdmVendor(models.Model):
     cpu_sum_huawei = models.IntegerField(default=0)
     cpu_sum_other = models.IntegerField(default=0)
 
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         db_table = 'tdm_vendor'
 
@@ -36,6 +39,9 @@ class TdmSystem(models.Model):
     best_rank_suite = models.ForeignKey(DimSuite, on_delete=models.CASCADE, related_name='tdm_system')
     best_rank_suite_name = models.CharField(max_length=100, default='')
 
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         db_table = 'tdm_system'
 
@@ -53,6 +59,9 @@ class TdmCpu(models.Model):
 
     is_turbo = models.BooleanField(default=False)
     logical_cpus = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'tdm_cpu'

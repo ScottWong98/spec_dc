@@ -23,4 +23,5 @@ urlpatterns = [
     path('dwd/', include('dwd.urls')),
     path('dws/', include('dws.urls')),
     path('tdm/', include('tdm.urls')),
+    path('ads/', include('ads.urls')),
 ]
