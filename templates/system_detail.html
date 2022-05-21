@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="py-2 container mx-3">
+        <div class="container">
+            <h3 class="mb-5">{{ system.system_name }}</h3>
+            <h4 class="mb-4">Basic Information</h4>
+            <div>
+                <p><span class="fw-bold">Vendor: </span>{{ system.vendor_name }}</p>
+                <p><span class="fw-bold">System Series: </span>{{ system.system_series }}</p>
+                <p><span class="fw-bold">CPU Name: </span>{{ system.cpu.cpu_name }}</p>
+                <p><span class="fw-bold">CPU GHz: </span>{{ system.cpu.cpu_ghz }} GHz</p>
+                <p><span class="fw-bold">Max GHz: </span>{{ system.cpu.max_ghz }} GHz</p>
+                <p><span class="fw-bold">Total Cores: </span>{{ tdm_system.total_cores }}</p>
+                <p><span class="fw-bold">Total Threads: </span>{{ tdm_system.total_threads }}</p>
+                <p>
+                    <span class="fw-bold">Best Rank: </span>
+                    {{ tdm_system.best_rank }} in {{ tdm_system.best_rank_suite_name }}
+                </p>
+                <p><span class="fw-bold">Chips: </span>{{ system.chips }}</p>
+                <p><span class="fw-bold">L1 Cache: </span>{{ system.l1_cache }}</p>
+                <p><span class="fw-bold">L2 Cache: </span>{{ system.l2_cache }}</p>
+                <p><span class="fw-bold">L3 Cache: </span>{{ system.l3_cache }}</p>
+                <p><span class="fw-bold">Available: </span>{{ system.hw_avail.full_date }}</p>
+            </div>
+            <hr>
+            <h4 class="mb-4">Test Information</h4>
+            <ul>
+                {% for item in tests %}
+                    <li>
+                        <p><span class="fw-bold">Suite Name: </span>{{ item.suite_name }}</p>
+                        <p><span class="fw-bold">Result: </span>{{ item.result }}</p>
+                        <p><span class="fw-bold">Test Date: </span>{{ item.test_date.full_date }}</p>
+{#                        <p><span class="fw-bold">Detail: </span>{{ item.full_url }}</p>#}
+
+                    </li>
+                {% endfor %}
+
+            </ul>
+        </div>
+
+
+    </div>
+
+{% endblock %}

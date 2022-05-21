@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="py-2 container mx-3">
+        <div class="container">
+            <h2>All Systems in {{ vendor.vendor }} ({{ systems_num }})</h2>
+        </div>
+        {% include 'list_base.html' %}
+
+    </div>
+
+{% endblock %}

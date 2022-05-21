@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="py-2 container mx-3">
+        <div class="container">
+            <h3>Results "{{ request.GET.keywords }}" ({{ systems_num }})</h3>
+        </div>
+        {% include 'list_base.html' %}
+
+    </div>
+
+{% endblock %}
