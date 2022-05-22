@@ -10,4 +10,5 @@ urlpatterns = [
     path('vendor', views.vendor_all, name='vendor'),
     path('vendor/<int:pk>', views.vendor_detail, name='vendor_detail'),
     path('system/<int:pk>', views.system_detail, name='system_detail'),
+    path('benchmark/<int:pk>', views.benchmark_detail, name='benchmark_detail'),
 ]

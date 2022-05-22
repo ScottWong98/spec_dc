@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="py-2 container mx-3">
+        <div class="container">
+            <h2>Rank in {{ suite_name }} ({{ tests_num }})</h2>
+        </div>
+        <div class="py-3">
+            {% for item in tests %}
+                <div class="card mb-3 border-0 me-md-4">
+                    <div class="row g-0">
+                        <div class="col">
+                            <div class="card pb-2 rounded-3 border-0">
+                                <div class="card-body small pb-1">
+                                    <p class="card-text mb-2 h5">
+                                        <a class="text-black" href="{% url 'app:system_detail' item.system_id %}">
+                                            {{ item.system_name }}
+                                        </a>
+                                    </p>
+                                    <p class="card-text my-1">
+                                        <span class="fw-bold">Benchmark: </span>
+                                        {{ item.suite.category }} / {{ item.suite.benchmark }} / {{ item.suite.suite }}
+                                    </p>
+                                    <p class="card-text my-1">
+                                        <span class="fw-bold">Rank: </span>
+                                        {{ item.rank_level }} / {{ item.total_test }}
+                                    </p>
+                                    <p class="card-text my-1">
+                                        <span class="fw-bold">Result: </span>
+                                        {{ item.result }}
+                                    </p>
+                                    <p class="card-text my-1">
+                                        <span class="fw-bold">Test Date: </span>
+                                        {{ item.test_date.full_date }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="pagination">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                    {% if tests.has_previous %}
+                        <li class="page-item">
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ tests.previous_page_number }}">previous</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item mx-4">
+                        <span>
+                            Page {{ tests.number }} of {{ tests.paginator.num_pages }}.
+                        </span>
+                    </li>
+                    {% if tests.has_next %}
+                        <li class="page-item">
+                            <a href="?page={{ tests.next_page_number }}">next</a>
+                            <a href="?page={{ tests.paginator.num_pages }}">last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+{% endblock %}

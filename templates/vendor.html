@@ -7,7 +7,7 @@
             {% for vendor in vendors %}
                 <div class="col">
                     <a class="text-dark" href="{% url 'app:vendor_detail' vendor.id %}">{{ vendor.vendor }}
-                        ({{ vendor.system.all|length }})</a>
+                        ({{ vendor.dim_system.all|length }})</a>
                 </div>
             {% endfor %}
         </div>

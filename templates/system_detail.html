@@ -5,39 +5,69 @@
     <div class="py-2 container mx-3">
         <div class="container">
             <h3 class="mb-5">{{ system.system_name }}</h3>
-            <h4 class="mb-4">Basic Information</h4>
+            <h4 class="mb-4">🏁 Test Information</h4>
+            <ul class="mb-4">
+                {% for item in tests %}
+                    <li style="list-style-type: circle;">
+                        <p><span class="fw-bold">Suite Name: </span>
+                            <a href="{% url 'app:benchmark_detail' item.suite_id %}">
+                                {{ item.suite_name }}
+                            </a>
+                        </p>
+                        <p><span class="fw-bold">Result: </span>{{ item.result }}</p>
+                        {% for bm in item.dws_benchmark.all|slice:":1" %}
+                            <p><span class="fw-bold">Rank: </span>{{ bm.rank_level }} / {{ bm.total_test }}</p>
+                        {% endfor %}
+                        <p><span class="fw-bold">Test Date: </span>{{ item.test_date.full_date }}</p>
+                        <p><span class="fw-bold">Detail: </span>
+                            <a href="{{ item.full_url }}">{{ item.full_url }}</a></p>
+                    </li>
+                {% endfor %}
+
+            </ul>
+            <h4 class="mb-4">🏁 Basic Information</h4>
             <div>
-                <p><span class="fw-bold">Vendor: </span>{{ system.vendor_name }}</p>
-                <p><span class="fw-bold">System Series: </span>{{ system.system_series }}</p>
+                <p><span class="fw-bold">Vendor: </span>
+                    <a class="text-black" href="{% url 'app:vendor_detail' system.vendor_id %}">
+                        {{ system.vendor_name }}
+                    </a>
+                </p>
+                <p><span class="fw-bold">System Series: </span>{{ system.system_series_name }}</p>
+                <p><span class="fw-bold">System Name: </span>{{ system.system_name }}</p>
+
                 <p><span class="fw-bold">CPU Name: </span>{{ system.cpu.cpu_name }}</p>
                 <p><span class="fw-bold">CPU GHz: </span>{{ system.cpu.cpu_ghz }} GHz</p>
                 <p><span class="fw-bold">Max GHz: </span>{{ system.cpu.max_ghz }} GHz</p>
+                <p><span class="fw-bold">Cores Per Chip: </span>{{ system.cpu.cores }}</p>
+                <p><span class="fw-bold">Threads Per Core: </span>{{ system.cpu.threads_per_core }}</p>
+                {% for tdm_cpu in system.cpu.tdm_cpu.all|slice:":1" %}
+                    <p><span class="fw-bold">Is Turbo: </span>
+                        {% if tdm_cpu.is_turbo == 1 %}
+                            True
+                        {% else %}
+                            False
+                        {% endif %}
+                    </p>
+                {% endfor %}
+
                 <p><span class="fw-bold">Total Cores: </span>{{ tdm_system.total_cores }}</p>
                 <p><span class="fw-bold">Total Threads: </span>{{ tdm_system.total_threads }}</p>
                 <p>
                     <span class="fw-bold">Best Rank: </span>
-                    {{ tdm_system.best_rank }} in {{ tdm_system.best_rank_suite_name }}
+                    <a class="text-black" href="{{ tdm_system.best_rank_test.full_url }}">
+                        {{ tdm_system.best_rank }} in {{ tdm_system.best_rank_suite_name }}
+                    </a>
                 </p>
                 <p><span class="fw-bold">Chips: </span>{{ system.chips }}</p>
                 <p><span class="fw-bold">L1 Cache: </span>{{ system.l1_cache }}</p>
                 <p><span class="fw-bold">L2 Cache: </span>{{ system.l2_cache }}</p>
                 <p><span class="fw-bold">L3 Cache: </span>{{ system.l3_cache }}</p>
+                <p><span class="fw-bold">Storage Type: </span>{{ system.storage_type }}</p>
+                <p><span class="fw-bold">Storage: </span>{{ system.storage }}</p>
+                <p><span class="fw-bold">Memory: </span>{{ system.memory }}</p>
+                <p><span class="fw-bold">Memory Amount: </span>{{ system.memory_amount }} GB</p>
                 <p><span class="fw-bold">Available: </span>{{ system.hw_avail.full_date }}</p>
             </div>
-            <hr>
-            <h4 class="mb-4">Test Information</h4>
-            <ul>
-                {% for item in tests %}
-                    <li>
-                        <p><span class="fw-bold">Suite Name: </span>{{ item.suite_name }}</p>
-                        <p><span class="fw-bold">Result: </span>{{ item.result }}</p>
-                        <p><span class="fw-bold">Test Date: </span>{{ item.test_date.full_date }}</p>
-{#                        <p><span class="fw-bold">Detail: </span>{{ item.full_url }}</p>#}
-
-                    </li>
-                {% endfor %}
-
-            </ul>
         </div>
 
 
